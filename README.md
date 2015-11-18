@@ -8,7 +8,8 @@ Using an ESP8266 and Telemachus to create a WiFi Kerbal controller.  I'm mostly 
 * [Telemachus](https://github.com/richardbunt/Telemachus)
 
 ## Getting Started
-1. Get yourself a [devkit](http://www.seeedstudio.com/depot/NodeMCU-v2-Lua-based-ESP8266-development-kit-p-2415.html)
+1. Start with [KSP](http://kerbalspaceprogram.com) and [Telemachus](https://github.com/richardbunt/Telemachus), make sure they work.
+2. Get yourself a [devkit](http://www.seeedstudio.com/depot/NodeMCU-v2-Lua-based-ESP8266-development-kit-p-2415.html)
 2. Install [Arduino core](https://github.com/esp8266/Arduino), and make sure you can program it
 3. Wire it up
 4. Take this project & upload it
