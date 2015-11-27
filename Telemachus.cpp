@@ -8,8 +8,11 @@
 #include "Arduino.h"
 #include "Telemachus.h"
 
+char paramBuffer[32];
+String c;
+
 Telemachus::Telemachus() {
-  
+  client.setTimeout(1000);
 }
 
 Telemachus::~Telemachus() {
@@ -37,8 +40,6 @@ boolean Telemachus::connect(char* host, int port) {
     client.stop();
     return false;
   }
-  // Start with something
-  webSocketClient.sendData("{\"+\":[\"v.name\",\"a.version\"],\"rate\":1000}");
   return true;
 }
 boolean Telemachus::connected() {
@@ -47,5 +48,28 @@ boolean Telemachus::connected() {
 
 boolean Telemachus::getData(String& data) {
   return webSocketClient.getData(data);
+}
+void Telemachus::sendData(String& data) {
+  return webSocketClient.sendData(data);
+}
+void Telemachus::command(const char* command) {
+  //c = String(command);
+  String send = _command_msg;
+  Serial.println("WTF?");
+  //send.replace("{c}",c);
+  Serial.println(send);
+  //Telemachus::sendData(send);
+}
+void Telemachus::command(const char* command, float value) {
+  dtostrf(value,4,3,paramBuffer);
+  return Telemachus::command(command, paramBuffer);
+}
+void Telemachus::command(const char* command, char* value) {
+  c = String(command) + "["+String(value)+"]";
+    
+  String send = _command_msg;
+  send.replace("{c}",c);
+  Serial.println(send);
+  Telemachus::sendData(send);
 }
 

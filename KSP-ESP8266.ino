@@ -26,13 +26,30 @@ static const bool DEBUG = true;
 static const byte MEMORY_OFFSET = 64;        // WiFi Manager takes the first 64
 static const byte MEMORY_ADDRESS_SERVER = 0; // KSP server, 32 bytes
 
+// PINS
+static const byte STATUS_PIN = 2;
+static const byte STAGE_PIN = 5;
+
 ESP8266WebServer server(80);
 
 // Communications with Telemachus
 Telemachus tm;
 
+const static char subscribe[] PROGMEM = "{\
+  \"+\":[\"t.universalTime\",\"f.throttle\"],\
+  \"rate\":100\
+}";
+
+int throttle = 0;
+
 void setup() {
+  pinMode(STAGE_PIN, INPUT_PULLUP);
+  
+  pinMode(STATUS_PIN, OUTPUT);
+  digitalWrite(STATUS_PIN,LOW);
   delay(1000);
+  digitalWrite(STATUS_PIN,HIGH);
+  
   Serial.begin(115200);
 
   // This handles accessing your wifi network
@@ -73,7 +90,15 @@ void loop() {
     if(data.length() > 0)
     {
       Serial.println(data);
+      yield();
+
+      if(abs(analogRead(A0) - throttle ) > 2)
+      {
+        throttle = analogRead(A0);
+        tm.command(f_setThrottle,constrain(map(throttle,10,1000,0,1000)/1000.0,0,1.0));
+      }
     }
+    
   }
   yield();
 }
@@ -82,16 +107,28 @@ void loop() {
  * Connect to KSP
  */
 void connect() {
+  // Indicator LED
+  digitalWrite(STATUS_PIN,HIGH);
+  
   String ip = getKSPAddress();
   DEBUG_PRINT("Connecting to " + ip);
   if(!tm.connect(ip))
   {
     DEBUG_PRINT("Failed.");
     // Unable to connect to host / Telemachus
-    delay(1000);
+    delay(5000);
     return;
   }
   DEBUG_PRINT("Connected.");
+  
+  // Start with something
+  delay(1000);
+  String start = "{\"+\":[\"a.version\"],\"rate\":100}";
+  tm.getData(ip);
+  tm.sendData(start);
+  
+  digitalWrite(STATUS_PIN,LOW);
+  //tm.setData(subscribe);
 }
 
 String getKSPAddress() {
