@@ -8,7 +8,9 @@
 #include "Arduino.h"
 #include "Telemachus.h"
 
-char paramBuffer[32];
+char paramBuffer[128];
+char commandBuffer[32];
+char floatBuffer[6];
 String c;
 
 Telemachus::Telemachus() {
@@ -52,24 +54,22 @@ boolean Telemachus::getData(String& data) {
 void Telemachus::sendData(String& data) {
   return webSocketClient.sendData(data);
 }
+void Telemachus::sendData(const char* data) {
+  strcpy_P(paramBuffer,data);
+  return webSocketClient.sendData(paramBuffer);
+}
 void Telemachus::command(const char* command) {
-  //c = String(command);
-  String send = _command_msg;
-  Serial.println("WTF?");
-  //send.replace("{c}",c);
-  Serial.println(send);
-  //Telemachus::sendData(send);
+  strcpy_P(commandBuffer,command);
+  sprintf_P(paramBuffer, _command_msg, commandBuffer);
+  Telemachus::sendData(paramBuffer);
 }
 void Telemachus::command(const char* command, float value) {
-  dtostrf(value,4,3,paramBuffer);
-  return Telemachus::command(command, paramBuffer);
+  dtostrf(value,4,3,floatBuffer);
+  return Telemachus::command(command, floatBuffer);
 }
 void Telemachus::command(const char* command, char* value) {
-  c = String(command) + "["+String(value)+"]";
-    
-  String send = _command_msg;
-  send.replace("{c}",c);
-  Serial.println(send);
-  Telemachus::sendData(send);
+  strcpy_P(commandBuffer,command);
+  sprintf_P(paramBuffer, _command_msg_param, commandBuffer, value);
+  Telemachus::sendData(paramBuffer);
 }
 

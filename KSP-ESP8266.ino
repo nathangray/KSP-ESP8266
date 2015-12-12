@@ -1,3 +1,4 @@
+
 /**
  * ESP8266 WiFi controller for Kerbal Space Program 
  * 
@@ -20,7 +21,7 @@
 // Finally, what we want to do
 #include "Telemachus.h"
 
-static const bool DEBUG = true;
+static const bool DEBUG = false;
 
 // Memory addresses
 static const byte MEMORY_OFFSET = 64;        // WiFi Manager takes the first 64
@@ -35,16 +36,18 @@ ESP8266WebServer server(80);
 // Communications with Telemachus
 Telemachus tm;
 
+// When we connect, we subscribe to this stuff
+// If you get random issues, try reducing the rate
 const static char subscribe[] PROGMEM = "{\
-  \"+\":[\"t.universalTime\",\"f.throttle\"],\
-  \"rate\":100\
+\"+\":[\"t.universalTime\",\"f.throttle\"],\
+\"rate\":100\
 }";
 
 int throttle = 0;
 
 void setup() {
+  // Set up pins
   pinMode(STAGE_PIN, INPUT_PULLUP);
-  
   pinMode(STATUS_PIN, OUTPUT);
   digitalWrite(STATUS_PIN,LOW);
   delay(1000);
@@ -54,11 +57,12 @@ void setup() {
 
   // This handles accessing your wifi network
   WiFiManager wifi;
-  // wifi.setDebugOutput(false);
+  wifi.setDebugOutput(DEBUG);
   String ssid = "KSPConsole " + String(ESP.getChipId());
   wifi.autoConnect(ssid.c_str());
   DEBUG_PRINT("Wifi connected");
 
+  // Setup web server
   MDNS.begin ( "kspconsole", WiFi.localIP());
   server.on("/", handleRoot);
   server.on("/setip", setKSPAddress);
@@ -69,7 +73,7 @@ void setup() {
   MDNS.addService("http", "tcp", 80);
   DEBUG_PRINT("Webserver ready");
 
-  
+  delay(1000);
   connect();
 }
 
@@ -92,10 +96,19 @@ void loop() {
       Serial.println(data);
       yield();
 
+      // Throttle
       if(abs(analogRead(A0) - throttle ) > 2)
       {
         throttle = analogRead(A0);
-        tm.command(f_setThrottle,constrain(map(throttle,10,1000,0,1000)/1000.0,0,1.0));
+        // Only map from 20 to 1000 to ensure there's a dead zone we can use to
+        // turn the engines off / max
+        tm.command(f_setThrottle,constrain(map(throttle,20,1000,0,1000)/1000.0,0,1.0));
+      }
+
+      // Stage
+      if(digitalRead(STAGE_PIN) == LOW)
+      {
+        tm.command(f_stage);
       }
     }
     
@@ -121,14 +134,12 @@ void connect() {
   }
   DEBUG_PRINT("Connected.");
   
-  // Start with something
   delay(1000);
-  String start = "{\"+\":[\"a.version\"],\"rate\":100}";
   tm.getData(ip);
-  tm.sendData(start);
   
+  // Start with something
+  tm.sendData(subscribe);
   digitalWrite(STATUS_PIN,LOW);
-  //tm.setData(subscribe);
 }
 
 String getKSPAddress() {
