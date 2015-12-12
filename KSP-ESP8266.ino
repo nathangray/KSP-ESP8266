@@ -3,6 +3,18 @@
  * ESP8266 WiFi controller for Kerbal Space Program 
  * 
  * Uses web sockets to connect to Telemachus on the host
+ * 
+ * If it is not on your WiFi, it will create its own.  Connect to it,
+ * and set your WiFi details.  Then it will join your WiFi network.
+ * 
+ * Connect to the ESP8266 using your browser to specify the target IP.
+ * It takes 5-10 seconds from power on to connection.
+ * 
+ * This example uses a button between ground and pin 5 which will stage, 
+ * and a potentiometer on A0 which controls the throttle.
+ * 
+ * The blue LED (Pin 2) will be on when connected to Telemachus.
+ * Enable DEBUG to get status messages over the serial connection
  */
 
 // Connecting to WiFi & websocket
@@ -26,7 +38,7 @@ static const bool DEBUG = false;
 
 // Memory addresses
 static const byte MEMORY_OFFSET = 64;        // WiFi Manager takes the first 64
-static const byte MEMORY_ADDRESS_SERVER = 0; // KSP server, 32 bytes
+static const byte MEMORY_ADDRESS_SERVER = 0; // KSP server IP/name, 32 bytes
 
 // PINS
 static const byte STATUS_PIN = 2;
@@ -109,7 +121,7 @@ void loop() {
   if(abs(analogRead(A0) - throttle ) > 2)
   {
     throttle = analogRead(A0);
-    // Only map from 20 to 1000 to ensure there's a dead zone we can use to
+    // Only map from 20 - 1000 to ensure there's a dead zone we can use to
     // turn the engines off / max
     tm.command(f_setThrottle,constrain(map(throttle,20,1000,0,1000)/1000.0,0,1.0));
   }
@@ -119,7 +131,6 @@ void loop() {
   {
     tm.command(f_stage);
   }
-  
 }
 
 /**
