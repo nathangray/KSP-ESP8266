@@ -21,6 +21,7 @@
 // Finally, what we want to do
 #include "Telemachus.h"
 
+// Enable for status messages over the serial connection
 static const bool DEBUG = false;
 
 // Memory addresses
@@ -31,6 +32,7 @@ static const byte MEMORY_ADDRESS_SERVER = 0; // KSP server, 32 bytes
 static const byte STATUS_PIN = 2;
 static const byte STAGE_PIN = 5;
 
+// This deals with browsers connecting
 ESP8266WebServer server(80);
 
 // Communications with Telemachus
@@ -43,7 +45,11 @@ const static char subscribe[] PROGMEM = "{\
 \"rate\":100\
 }";
 
+// Previous throttle value, so we don't need to keep sending
 int throttle = 0;
+
+// Store what we get in here
+String data;
 
 void setup() {
   // Set up pins
@@ -62,7 +68,7 @@ void setup() {
   wifi.autoConnect(ssid.c_str());
   DEBUG_PRINT("Wifi connected");
 
-  // Setup web server
+  // Setup web server to talk to browser
   MDNS.begin ( "kspconsole", WiFi.localIP());
   server.on("/", handleRoot);
   server.on("/setip", setKSPAddress);
@@ -74,46 +80,46 @@ void setup() {
   DEBUG_PRINT("Webserver ready");
 
   delay(1000);
+
+  // Connect to KSP
   connect();
 }
 
 void loop() {
   // Listen for web browsers
   server.handleClient();
-  
+
+  // Not connected to KSP, keep trying.
   if(!tm.connected())
   {
     DEBUG_PRINT("Lost Telemachus");
     connect();
     return;
   }
-  else
+
+  // Get data
+  tm.getData(data);
+  if(data.length() > 0)
   {
-    String data;
-    tm.getData(data);
-    if(data.length() > 0)
-    {
-      Serial.println(data);
-      yield();
-
-      // Throttle
-      if(abs(analogRead(A0) - throttle ) > 2)
-      {
-        throttle = analogRead(A0);
-        // Only map from 20 to 1000 to ensure there's a dead zone we can use to
-        // turn the engines off / max
-        tm.command(f_setThrottle,constrain(map(throttle,20,1000,0,1000)/1000.0,0,1.0));
-      }
-
-      // Stage
-      if(digitalRead(STAGE_PIN) == LOW)
-      {
-        tm.command(f_stage);
-      }
-    }
-    
+    Serial.println(data);
+    yield();
   }
-  yield();
+
+  // Throttle
+  if(abs(analogRead(A0) - throttle ) > 2)
+  {
+    throttle = analogRead(A0);
+    // Only map from 20 to 1000 to ensure there's a dead zone we can use to
+    // turn the engines off / max
+    tm.command(f_setThrottle,constrain(map(throttle,20,1000,0,1000)/1000.0,0,1.0));
+  }
+
+  // Stage
+  if(digitalRead(STAGE_PIN) == LOW)
+  {
+    tm.command(f_stage);
+  }
+  
 }
 
 /**
