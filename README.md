@@ -15,3 +15,14 @@ Using an ESP8266 and Telemachus to create a WiFi Kerbal controller.  I'm mostly 
 3. Wire it up
 ![fritzing circuit](Simple circuit.png)
 4. Take this project & upload it
+
+## Use
+If it is not on your WiFi, it will create its own.  Connect to it, and set your WiFi details.  Then it will join your WiFi network.
+Connect to the ESP8266 using your browser and specify the target IP in the form.
+It takes 5-10 seconds from power on to connection.
+
+This example uses a button between ground and GPIO5 (Pin 1) which will stage, and a potentiometer on A0 which controls the throttle.  The blue LED (Pin 2) will be on when connected to Telemachus.
+
+Enable DEBUG to get status messages over the serial connection
+
+It probably depends on your computer, but for me the lag is almost a second.
