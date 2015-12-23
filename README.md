@@ -14,7 +14,7 @@ Using an ESP8266 and Telemachus to create a WiFi Kerbal controller.  I'm mostly 
 2. Install [Arduino core](https://github.com/esp8266/Arduino), and make sure you can program the ESP8266 using the simple examples that come with it.
 3. Wire it up
 ![fritzing circuit](Simple circuit.png)
-4. Take this project & upload it
+4. Take this project & upload it.  You can just use the compiled binary if you do not feel like messing around with dependencies.
 
 ## Use
 If it is not on your WiFi, it will create its own.  Connect to it, and set your WiFi details.  Then it will join your WiFi network.
